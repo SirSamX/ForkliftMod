@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"id": "forklift",
+	"version": "${version}",
+	"name": "Forklift",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/forklift/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"me.sirsam.Forklift"
+		],
+		"client": [
+			"me.sirsam.ForkliftClient"
+		],
+		"fabric-datagen": [
+			"me.sirsam.ForkliftDataGenerator"
+		]
+	},
+	"mixins": [
+		"forklift.mixins.json",
+		{
+			"config": "forklift.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
