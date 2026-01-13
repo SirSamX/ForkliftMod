@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "smartvillagers:item/suspicious_substance"
+    "model": "forklift:item/suspicious_substance"
   }
 }

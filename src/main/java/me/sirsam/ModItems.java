@@ -16,6 +16,7 @@ import java.util.function.Function;
 public final class ModItems {
     public static final Item FUEL_CANISTER = register("fuel_canister", Item::new, new Item.Properties());
     public static final Item FORKLIFT_SPAWN_EGG = register("forklift_spawn_egg", SpawnEggItem::new, new Item.Properties().spawnEgg(ModEntities.FORKLIFT));
+    public static final Item SUSPICIOUS_SUBSTANCE = register("suspicious_substance", Item::new, new Item.Properties());
 
     public static <GenericItem extends Item> GenericItem register(String name, Function<Item.Properties, GenericItem> itemFactory, Item.Properties settings) {
         ResourceKey<@NotNull Item> key = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(Forklift.MOD_ID, name));
