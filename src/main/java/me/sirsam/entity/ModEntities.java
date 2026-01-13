@@ -13,7 +13,7 @@ import net.minecraft.world.entity.MobCategory;
 import org.jetbrains.annotations.NotNull;
 
 public final class ModEntities {
-    public static final EntityType<@NotNull ForkliftEntity> FORKLIFT= register("forklift", EntityType.Builder.of(ForkliftEntity::new, MobCategory.MISC).sized(2f, 2f));
+    public static final EntityType<@NotNull ForkliftEntity> FORKLIFT= register("forklift", EntityType.Builder.of(ForkliftEntity::new, MobCategory.MISC).sized(2.3f, 3.0f));
 
     private static <T extends Entity> EntityType<@NotNull T> register(String name, EntityType.Builder<@NotNull T> builder) {
         ResourceKey<@NotNull EntityType<?>> key = ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Forklift.MOD_ID, name));

@@ -41,7 +41,8 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
         return LivingEntity.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, 5)
                 .add(Attributes.TEMPT_RANGE, 10)
-                .add(Attributes.MOVEMENT_SPEED, 0.3);
+                .add(Attributes.MOVEMENT_SPEED, 0.3)
+                .add(Attributes.SCALE, 1.5);
     }
 
     protected PlayState flyAnimController(final AnimationTest<@NotNull GeoAnimatable> animTest) {
