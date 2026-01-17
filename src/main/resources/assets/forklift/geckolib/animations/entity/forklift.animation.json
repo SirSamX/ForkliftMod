@@ -2,7 +2,7 @@
 	"format_version": "1.8.0",
 	"animations": {
 		"up": {
-			"loop": "hold_on_last_frame",
+			"loop": true,
 			"animation_length": 1,
 			"bones": {
 				"front": {
@@ -11,8 +11,7 @@
 							"vector": [0, 0, 0]
 						},
 						"1.0": {
-							"vector": [0, "pos", 0],
-							"easing": "easeInOutSine"
+							"vector": [0, 25, 0]
 						}
 					}
 				}
