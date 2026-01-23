@@ -1,11 +1,12 @@
 {
-	"required": true,
-	"package": "me.sirsam.mixin.client",
-	"compatibilityLevel": "JAVA_21",
-	"client": [
-		"ExampleClientMixin"
-	],
-	"injectors": {
-		"defaultRequire": 1
+  "required": true,
+  "package": "me.sirsam.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ExampleClientMixin",
+    "LightningColorMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
 	}
 }

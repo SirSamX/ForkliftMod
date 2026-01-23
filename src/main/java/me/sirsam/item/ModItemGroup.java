@@ -1,5 +1,6 @@
-package me.sirsam;
+package me.sirsam.item;
 
+import me.sirsam.Forklift;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.core.Registry;

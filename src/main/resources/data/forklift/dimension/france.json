@@ -1,0 +1,15 @@
+{
+  "type": "forklift:france",
+  "generator": {
+    "type": "minecraft:noise",
+    "biome_source": {
+      "type": "minecraft:checkerboard",
+      "scale": 5,
+      "biomes": [
+        "minecraft:savanna",
+        "minecraft:desert"
+      ]
+    },
+    "settings": "minecraft:overworld"
+  }
+}

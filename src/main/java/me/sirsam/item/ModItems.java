@@ -1,5 +1,6 @@
-package me.sirsam;
+package me.sirsam.item;
 
+import me.sirsam.Forklift;
 import me.sirsam.entity.ModEntities;
 import net.fabricmc.fabric.api.registry.FuelRegistryEvents;
 import net.minecraft.core.Registry;
