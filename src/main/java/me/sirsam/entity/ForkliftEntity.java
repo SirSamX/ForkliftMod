@@ -1,7 +1,6 @@
 package me.sirsam.entity;
 
-import me.sirsam.ModItems;
-import net.minecraft.nbt.CompoundTag;
+import me.sirsam.item.ModItems;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
@@ -61,8 +60,7 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
     }
 
     protected PlayState forkAnimController(final AnimationTest<@NotNull GeoAnimatable> animTest) {
-        if (true) {
-            System.out.println("move");
+        if (animTest.isMoving()) {
             return animTest.setAndContinue(UP_ANIM);
         }
 
