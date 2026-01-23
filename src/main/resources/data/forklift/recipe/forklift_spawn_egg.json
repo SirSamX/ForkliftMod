@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " 11",
+    " 03",
+    "211"
+  ],
+  "key": {
+    "0":
+      "minecraft:heavy_core",
+    "1":
+      "minecraft:orange_concrete",
+    "2":
+      "minecraft:iron_bars",
+    "3":
+      "minecraft:blast_furnace"
+  },
+  "result": {
+    "count": 1,
+    "id": "forklift:forklift_spawn_egg"
+  }
+}
