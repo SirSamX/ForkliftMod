@@ -2,16 +2,43 @@
 	"format_version": "1.8.0",
 	"animations": {
 		"up": {
-			"loop": true,
-			"animation_length": 1,
+			"loop": "hold_on_last_frame",
+			"animation_length": 3,
 			"bones": {
 				"front": {
 					"position": {
 						"0.0": {
 							"vector": [0, 0, 0]
 						},
-						"1.0": {
-							"vector": [0, 25, 0]
+						"3.0": {
+							"vector": [0, 25, 0],
+							"easing": "easeOutSine"
+						}
+					}
+				}
+			}
+		},
+		"drive": {
+			"loop": true,
+			"animation_length": 0.125,
+			"bones": {
+				"front2": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.125": {
+							"vector": [45, 0, 0]
+						}
+					}
+				},
+				"back": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.125": {
+							"vector": [45, 0, 0]
 						}
 					}
 				}
