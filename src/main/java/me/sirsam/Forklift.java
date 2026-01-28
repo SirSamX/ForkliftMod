@@ -5,9 +5,6 @@ import me.sirsam.entity.ModEntities;
 import me.sirsam.item.ModItemGroup;
 import me.sirsam.item.ModItems;
 import net.fabricmc.api.ModInitializer;
-
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

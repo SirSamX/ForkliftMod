@@ -18,17 +18,17 @@
 				}
 			}
 		},
-		"drive": {
+		"move.drive": {
 			"loop": true,
-			"animation_length": 0.125,
+			"animation_length": 1,
 			"bones": {
 				"front2": {
 					"rotation": {
 						"0.0": {
 							"vector": [0, 0, 0]
 						},
-						"0.125": {
-							"vector": [45, 0, 0]
+						"1.0": {
+							"vector": [360, 0, 0]
 						}
 					}
 				},
@@ -37,8 +37,8 @@
 						"0.0": {
 							"vector": [0, 0, 0]
 						},
-						"0.125": {
-							"vector": [45, 0, 0]
+						"1.0": {
+							"vector": [360, 0, 0]
 						}
 					}
 				}

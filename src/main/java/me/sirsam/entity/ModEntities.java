@@ -21,7 +21,7 @@ public final class ModEntities {
     }
 
     public static void init() {
-        FabricDefaultAttributeRegistry.register(FORKLIFT, ForkliftEntity.createCubeAttributes());
+        FabricDefaultAttributeRegistry.register(FORKLIFT, ForkliftEntity.createAttributes());
         Forklift.LOGGER.info("Registering mod entities...");
     }
 }

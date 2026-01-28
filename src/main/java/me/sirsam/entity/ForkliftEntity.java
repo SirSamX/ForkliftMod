@@ -28,6 +28,8 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.manager.AnimatableManager;
 import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.object.PlayState;
+import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class ForkliftEntity extends LivingEntity implements GeoEntity {
@@ -35,7 +37,6 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
     private float steeringAngle = 0.0F;
     private int backupBeeperTimer = 0;
     protected static final RawAnimation UP_ANIM = RawAnimation.begin().thenPlayAndHold("up");
-    protected static final RawAnimation DRIVE_ANIM = RawAnimation.begin().thenLoop("drive");
     private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
     protected final SimpleContainer inventory = new SimpleContainer(9) {
         @Override
@@ -49,15 +50,18 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
 
     }
 
+    @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>("drive", 5, state -> {
+        controllers.add(new AnimationController<>("drive", 0, state -> {
             if (state.isMoving()) {
-                return state.setAndContinue(DRIVE_ANIM);}
-            return state.setAndContinue(DRIVE_ANIM);
+                return state.setAndContinue(DefaultAnimations.DRIVE);
+            }
+
+            return PlayState.STOP;
         }));
     }
 
-    public static AttributeSupplier.Builder createCubeAttributes() {
+    public static AttributeSupplier.Builder createAttributes() {
         return LivingEntity.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, 5)
                 .add(Attributes.TEMPT_RANGE, 10)
@@ -205,18 +209,15 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
         return super.interact(player, hand);
     }
 
-    private int dancingTimeLeft;
-
     @Override
     protected void addAdditionalSaveData(@NotNull ValueOutput valueOutput) {
         super.addAdditionalSaveData(valueOutput);
-        valueOutput.putInt("dancing_time_left", dancingTimeLeft);
+        //valueOutput.putInt("dancing_time_left", dancingTimeLeft);
     }
 
     @Override
     protected void readAdditionalSaveData(@NotNull ValueInput valueInput) {
         super.readAdditionalSaveData(valueInput);
-        dancingTimeLeft = valueInput.getInt("dancing_time_left").orElse(0);
-        //setDancing(dancingTimeLeft > 0);
+        //dancingTimeLeft = valueInput.getInt("dancing_time_left").orElse(0);
     }
 }
