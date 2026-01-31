@@ -4,5 +4,6 @@
   "item.forklift.forklift_spawn_egg": "Forklift Spawn Egg",
   "item.forklift.suspicious_substance": "Suspicious Substance",
   "entity.forklift.forklift": "Forklift",
-  "block.forklift.condensed_dirt": "Condensed Dirt"
+  "block.forklift.condensed_dirt": "Condensed Dirt",
+  "block.forklift.forklift_table": "Forklift Crafting table"
 }

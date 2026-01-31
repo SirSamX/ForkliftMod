@@ -3,5 +3,6 @@
   "item.forklift.fuel_canister": "Benzinkanister",
   "item.forklift.forklift_spawn_egg": "Gabelstapler-Spawn-Ei",
   "item.forklift.suspicious_substance": "Yippi",
-  "entity.forklift.forklift": "Gabelstapler"
+  "entity.forklift.forklift": "Gabelstapler",
+  "block.forklift.forklift_table": "Gabelstaplerwerkbank"
 }

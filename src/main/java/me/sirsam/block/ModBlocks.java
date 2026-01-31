@@ -10,6 +10,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CraftingTableBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +24,13 @@ public final class ModBlocks {
             "condensed_dirt",
             Block::new,
             BlockBehaviour.Properties.of().sound(SoundType.GRASS),
+            true
+    );
+
+    public static final Block FORKLIFT_TABLE = register(
+            "forklift_table",
+            CraftingTableBlock::new,
+            BlockBehaviour.Properties.ofFullCopy(Blocks.CRAFTING_TABLE),
             true
     );
 
