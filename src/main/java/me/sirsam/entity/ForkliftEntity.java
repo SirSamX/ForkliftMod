@@ -6,6 +6,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
@@ -26,26 +27,30 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.manager.AnimatableManager;
 import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.animation.object.PlayState;
 import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class ForkliftEntity extends LivingEntity implements GeoEntity {
     private float currentDriveSpeed = 0.0F;
-    private float steeringAngle = 0.0F;
+    public float prevSteeringAngle = 0.0F;
+    public float steeringAngle = 0.0F;
     private int backupBeeperTimer = 0;
-    public float lastLiftHeight = 0;
+    public float lastLiftHeight = 0.0F;
 
+    public static final RawAnimation STEER_ANIM = RawAnimation.begin().thenLoop("move.steer");
     private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
 
     public static final EntityDataAccessor<@NotNull Float> LIFT_HEIGHT =
             SynchedEntityData.defineId(ForkliftEntity.class, EntityDataSerializers.FLOAT);
 
-    private static final EntityDataAccessor<@NotNull Float> DRIVE_SPEED =
+    public static final EntityDataAccessor<@NotNull Float> DRIVE_SPEED =
             SynchedEntityData.defineId(ForkliftEntity.class, EntityDataSerializers.FLOAT);
 
     protected final SimpleContainer inventory = new SimpleContainer(9) {
@@ -78,14 +83,15 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>("drive_controller", 2, state -> {
-            Float speed = ForkliftEntity.this.entityData.get(DRIVE_SPEED);
+        controllers.add(new AnimationController<>("drive_controller", state -> {
+            float speed = ForkliftEntity.this.entityData.get(DRIVE_SPEED);
 
             if (Math.abs(speed) > 0.01F) {
                 return state.setAndContinue(DefaultAnimations.DRIVE);
             }
             return PlayState.STOP;
         }));
+        controllers.add(new AnimationController<>("steer_controller", state -> state.setAndContinue(STEER_ANIM)).additiveAnimations());
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -94,7 +100,8 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
                 .add(Attributes.TEMPT_RANGE, 10)
                 .add(Attributes.MOVEMENT_SPEED, 0.4)
                 .add(Attributes.SCALE, 1.5)
-                .add(Attributes.STEP_HEIGHT, 1);
+                .add(Attributes.STEP_HEIGHT, 1)
+                .add(Attributes.KNOCKBACK_RESISTANCE, 1);
     }
 
     @Override
@@ -156,8 +163,20 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
         super.tick();
 
         lastLiftHeight = getLiftHeight();
+        this.prevSteeringAngle = this.steeringAngle;
 
-        //if(this.level().isClientSide()) System.out.println("Client Speed: " + this.entityData.get(DRIVE_SPEED));
+        // --- STEERING ---
+        if (this.level().isClientSide()) {
+            LivingEntity passenger = this.getControllingPassenger();
+            if (passenger instanceof Player player && player.isLocalPlayer()) {
+                float steerInput = player.xxa;
+                if (steerInput != 0) {
+                    this.steeringAngle = Mth.clamp(this.steeringAngle + (steerInput * 4.5F), -45.0F, 45.0F);
+                } else {
+                    this.steeringAngle = Mth.lerp(0.2F, this.steeringAngle, 0.0F);
+                }
+            }
+        }
     }
 
     @Override
@@ -175,7 +194,6 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
 
             if (isLocalControl || isServerLogic) {
                 float forwardInput = passenger.zza;
-                float steerInput = passenger.xxa;
                 float maxSpeed = (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED);
 
                 // --- DRIVE LOGIC ---
@@ -188,17 +206,7 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
                     }
                 }
 
-                // Sync speed to DataTracker so animations work for everyone
-                if (isServerLogic) {
-                    this.entityData.set(DRIVE_SPEED, this.currentDriveSpeed);
-                }
-
-                // --- STEERING ---
-                if (steerInput != 0) {
-                    this.steeringAngle = Mth.clamp(this.steeringAngle + (steerInput * 4.5F), -45.0F, 45.0F);
-                } else {
-                    this.steeringAngle = Mth.lerp(0.2F, this.steeringAngle, 0.0F);
-                }
+                this.entityData.set(DRIVE_SPEED, this.currentDriveSpeed);
 
                 if (Math.abs(this.currentDriveSpeed) > 0.01F) {
                     // Adjust turn rate based on speed
@@ -265,6 +273,16 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
         }
 
         return super.interact(player, hand);
+    }
+
+    @Override
+    protected @Nullable SoundEvent getHurtSound(@NotNull DamageSource damageSource) {
+        return SoundEvents.NETHERITE_BLOCK_BREAK;
+    }
+
+    @Override
+    protected @Nullable SoundEvent getDeathSound() {
+        return SoundEvents.NETHERITE_BLOCK_BREAK;
     }
 
     @Override

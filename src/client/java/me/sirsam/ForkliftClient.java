@@ -11,6 +11,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
 import software.bernie.geckolib.loading.math.MolangQueries;
 
@@ -38,7 +39,15 @@ public class ForkliftClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		EntityRenderers.register(ModEntities.FORKLIFT, ForkliftRenderer::new);
-		MolangQueries.<ForkliftEntity>setActorVariable("query.forklift_forklift_lift_height", actor -> actor.animatable().getLiftHeight());
+
+		MolangQueries.<ForkliftEntity>setActorVariable("query.forklift_forklift_steering_angle", actor -> {
+			ForkliftEntity forklift = actor.animatable();
+			float partialTick = actor.partialTick();
+
+			return Mth.lerp(partialTick, forklift.prevSteeringAngle, forklift.steeringAngle);
+		});
+
+		MolangQueries.<ForkliftEntity>setActorVariable("query.forklift_forklift_drive_speed", actor -> (-2000 * actor.animatable().getEntityData().get(ForkliftEntity.DRIVE_SPEED)));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			if (client.player != null && client.player.getVehicle() instanceof ForkliftEntity) {

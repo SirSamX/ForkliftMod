@@ -3,6 +3,7 @@ package me.sirsam;
 import me.sirsam.entity.ForkliftEntity;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.Nullable;
@@ -20,6 +21,11 @@ public class ForkliftRenderer<R extends LivingEntityRenderState & GeoRenderState
         super(context, new ForkliftModel());
 
         this.withRenderLayer(new AutoGlowingGeoLayer<>(this));
+    }
+
+    @Override
+    public int getPackedOverlay(@NotNull ForkliftEntity animatable, @Nullable Void relatedObject, float u, float partialTick) {
+        return OverlayTexture.NO_OVERLAY;
     }
 
     @Override
