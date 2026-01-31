@@ -1,18 +1,54 @@
 {
 	"format_version": "1.8.0",
 	"animations": {
-		"up": {
+		"move.drive": {
 			"loop": true,
 			"animation_length": 1,
 			"bones": {
-				"front": {
-					"position": {
+				"1": {
+					"rotation": {
 						"0.0": {
 							"vector": [0, 0, 0]
 						},
 						"1.0": {
-							"vector": [0, 25, 0]
+							"vector": ["-query.forklift_forklift_drive_speed", 0, 0]
 						}
+					}
+				},
+				"4": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"1.0": {
+							"vector": ["-query.forklift_forklift_drive_speed", 0, 0]
+						}
+					}
+				},
+				"back": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"1.0": {
+							"vector": ["-query.forklift_forklift_drive_speed", 0, 0]
+						}
+					}
+				}
+			}
+		},
+		"move.steer": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.4583,
+			"bones": {
+				"1": {
+					"rotation": {
+						"vector": [0, "-query.forklift_forklift_steering_angle", 0]
+					}
+				},
+				"4": {
+					"rotation": {
+						"vector": [0, "-query.forklift_forklift_steering_angle", 0]
 					}
 				}
 			}

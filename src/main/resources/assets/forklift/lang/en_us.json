@@ -5,5 +5,8 @@
   "item.forklift.suspicious_substance": "Suspicious Substance",
   "entity.forklift.forklift": "Forklift",
   "block.forklift.condensed_dirt": "Condensed Dirt",
+  "key.category.forklift.custom_category": "Forklift",
+  "key.forklift.fork_up": "Lift Fork",
+  "key.forklift.fork_down": "Lower Fork",
   "block.forklift.forklift_table": "Forklift Crafting table"
 }

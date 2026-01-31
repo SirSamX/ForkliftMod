@@ -2,8 +2,14 @@ package me.sirsam.entity;
 
 import me.sirsam.item.ModItems;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
@@ -21,19 +27,32 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
-import software.bernie.geckolib.animatable.GeoAnimatable;
+import org.jspecify.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.manager.AnimatableManager;
 import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.animation.object.PlayState;
-import software.bernie.geckolib.animation.state.AnimationTest;
+import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class ForkliftEntity extends LivingEntity implements GeoEntity {
-    protected static final RawAnimation UP_ANIM = RawAnimation.begin().thenLoop("up");
+    private float currentDriveSpeed = 0.0F;
+    public float prevSteeringAngle = 0.0F;
+    public float steeringAngle = 0.0F;
+    private int backupBeeperTimer = 0;
+    public float lastLiftHeight = 0.0F;
+
+    public static final RawAnimation STEER_ANIM = RawAnimation.begin().thenLoop("move.steer");
     private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
+
+    public static final EntityDataAccessor<@NotNull Float> LIFT_HEIGHT =
+            SynchedEntityData.defineId(ForkliftEntity.class, EntityDataSerializers.FLOAT);
+
+    public static final EntityDataAccessor<@NotNull Float> DRIVE_SPEED =
+            SynchedEntityData.defineId(ForkliftEntity.class, EntityDataSerializers.FLOAT);
+
     protected final SimpleContainer inventory = new SimpleContainer(9) {
         @Override
         public boolean canPlaceItem(int i, @NotNull ItemStack itemStack) {
@@ -43,28 +62,46 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
 
     public ForkliftEntity(EntityType<? extends @NotNull ForkliftEntity> type, Level level) {
         super(type, level);
-
     }
 
-    public void registerControllers(final AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>("up", 0, this::forkAnimController));
+    public float getLiftHeight() {
+        return entityData.get(LIFT_HEIGHT);
     }
 
-    public static AttributeSupplier.Builder createCubeAttributes() {
+    public void setLiftHeight(float h) {
+        if (Math.abs(getLiftHeight() - h) > 0.01f) {
+            entityData.set(LIFT_HEIGHT, Mth.clamp(h, 0.0F, 25.0F));
+        }
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(LIFT_HEIGHT, 0.0F);
+        builder.define(DRIVE_SPEED, 0.0F);
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>("drive_controller", state -> {
+            float speed = ForkliftEntity.this.entityData.get(DRIVE_SPEED);
+
+            if (Math.abs(speed) > 0.01F) {
+                return state.setAndContinue(DefaultAnimations.DRIVE);
+            }
+            return PlayState.STOP;
+        }));
+        controllers.add(new AnimationController<>("steer_controller", state -> state.setAndContinue(STEER_ANIM)).additiveAnimations());
+    }
+
+    public static AttributeSupplier.Builder createAttributes() {
         return LivingEntity.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, 5)
                 .add(Attributes.TEMPT_RANGE, 10)
-                .add(Attributes.MOVEMENT_SPEED, 0.3)
+                .add(Attributes.MOVEMENT_SPEED, 0.4)
                 .add(Attributes.SCALE, 1.5)
-                .add(Attributes.STEP_HEIGHT, 1);
-    }
-
-    protected PlayState forkAnimController(final AnimationTest<@NotNull GeoAnimatable> animTest) {
-        if (animTest.isMoving()) {
-            return animTest.setAndContinue(UP_ANIM);
-        }
-
-        return PlayState.STOP;
+                .add(Attributes.STEP_HEIGHT, 1)
+                .add(Attributes.KNOCKBACK_RESISTANCE, 1);
     }
 
     @Override
@@ -112,11 +149,6 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
     }
 
     @Override
-    public void rideTick() {
-        super.rideTick();
-    }
-
-    @Override
     public @NotNull HumanoidArm getMainArm() {
         return HumanoidArm.RIGHT;
     }
@@ -127,52 +159,92 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
     }
 
     @Override
-    public void travel(@NotNull Vec3 travelVector) {
-        if (this.isAlive()) {
+    public void tick() {
+        super.tick();
+
+        lastLiftHeight = getLiftHeight();
+        this.prevSteeringAngle = this.steeringAngle;
+
+        // --- STEERING ---
+        if (this.level().isClientSide()) {
             LivingEntity passenger = this.getControllingPassenger();
-            if (passenger != null) {
-                // 1. Match rotation to the driver
-                this.setYRot(passenger.getYRot());
-                this.yRotO = this.getYRot();
-                this.setXRot(passenger.getXRot() * 0.5F);
-                this.setRot(this.getYRot(), this.getXRot());
-                this.yBodyRot = this.getYRot();
-                this.yHeadRot = this.yBodyRot;
-
-                // 2. Get Input Directions from the passenger
-                float forward = passenger.zza; // W/S keys
-                float strafe = passenger.xxa;  // A/D keys
-
-                if (forward <= 0.0F) {
-                    forward *= 0.5F; // Realistic: Reverse is slower
-                }
-
-                // 3. Handle Sprinting
-                float speedMultiplier = passenger.isSprinting() ? 1.5F : 1.0F;
-
-                // 4. Movement Execution
-                // In LivingEntity, we check if we are controlled by the client/local player
-                if (this.shouldClientDrive()) {
-                    this.setSpeed((float) this.getAttributeValue(Attributes.MOVEMENT_SPEED) * speedMultiplier);
-                    super.travel(new Vec3(strafe, travelVector.y, forward));
+            if (passenger instanceof Player player && player.isLocalPlayer()) {
+                float steerInput = player.xxa;
+                if (steerInput != 0) {
+                    this.steeringAngle = Mth.clamp(this.steeringAngle + (steerInput * 4.5F), -45.0F, 45.0F);
                 } else {
-                    // This helps prevent "ghost" movement on the server/other clients
-                    this.setDeltaMovement(Vec3.ZERO);
+                    this.steeringAngle = Mth.lerp(0.2F, this.steeringAngle, 0.0F);
                 }
-
-                return;
             }
         }
+    }
 
-        // Default physics (gravity, etc.) when no one is riding
+    @Override
+    public void travel(@NotNull Vec3 travelVector) {
+        if (!this.isAlive()) {
+            super.travel(travelVector);
+            return;
+        }
+
+        LivingEntity passenger = this.getControllingPassenger();
+        if (passenger != null) {
+            // Correct logic to check for the local player's input on client vs server processing
+            boolean isLocalControl = this.level().isClientSide() && passenger instanceof Player player && player.isLocalPlayer();
+            boolean isServerLogic = !this.level().isClientSide();
+
+            if (isLocalControl || isServerLogic) {
+                float forwardInput = passenger.zza;
+                float maxSpeed = (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED);
+
+                // --- DRIVE LOGIC ---
+                if (Math.abs(forwardInput) > 0) {
+                    this.currentDriveSpeed = Mth.lerp(0.08F, this.currentDriveSpeed, forwardInput * maxSpeed);
+                } else {
+                    this.currentDriveSpeed = Mth.lerp(0.02F, this.currentDriveSpeed, 0);
+                    if (Math.abs(this.currentDriveSpeed) < 0.005F) {
+                        this.currentDriveSpeed = 0.0F;
+                    }
+                }
+
+                this.entityData.set(DRIVE_SPEED, this.currentDriveSpeed);
+
+                if (Math.abs(this.currentDriveSpeed) > 0.01F) {
+                    // Adjust turn rate based on speed
+                    float turnIntensity = (this.steeringAngle / 45.0F) * (this.currentDriveSpeed > 0 ? 5.5F : -5.5F);
+                    this.setYRot(this.getYRot() - turnIntensity);
+                    this.yRotO = this.getYRot();
+                }
+
+                // --- MOVEMENT ---
+                float rotationRadians = this.getYRot() * ((float) Math.PI / 180F);
+                this.setDeltaMovement(-Mth.sin(rotationRadians) * this.currentDriveSpeed, travelVector.y, Mth.cos(rotationRadians) * this.currentDriveSpeed);
+                this.move(MoverType.SELF, this.getDeltaMovement());
+
+                // --- SERVER-ONLY EFFECTS (Sound) ---
+                if (isServerLogic) {
+                    if (this.currentDriveSpeed < -0.05F) {
+                        if (this.backupBeeperTimer <= 0) {
+                            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                                    SoundEvents.NOTE_BLOCK_PLING, this.getSoundSource(), 1.0F, 2.0F);
+                            this.backupBeeperTimer = 15;
+                        }
+                        this.backupBeeperTimer--;
+                    } else {
+                        this.backupBeeperTimer = 0;
+                    }
+                }
+            }
+            return;
+        }
+
+        // Reset when empty
+        this.currentDriveSpeed = 0;
+        if (!this.level().isClientSide()) {
+            this.entityData.set(DRIVE_SPEED, 0.0F);
+        }
         super.travel(travelVector);
     }
 
-    protected boolean shouldClientDrive() {
-        return this.getControllingPassenger() instanceof Player player && player.isLocalPlayer();
-    }
-
-    @SuppressWarnings("resource")
     @Override
     public @NotNull InteractionResult interact(@NotNull Player player, @NotNull InteractionHand hand) {
         if (player.isSecondaryUseActive()) {
@@ -193,6 +265,7 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
         }
 
         if (!this.isVehicle()) {
+
             if (!this.level().isClientSide()) {
                 player.startRiding(this);
             }
@@ -202,17 +275,25 @@ public class ForkliftEntity extends LivingEntity implements GeoEntity {
         return super.interact(player, hand);
     }
 
-    private int dancingTimeLeft;
+    @Override
+    protected @Nullable SoundEvent getHurtSound(@NotNull DamageSource damageSource) {
+        return SoundEvents.NETHERITE_BLOCK_BREAK;
+    }
+
+    @Override
+    protected @Nullable SoundEvent getDeathSound() {
+        return SoundEvents.NETHERITE_BLOCK_BREAK;
+    }
+
     @Override
     protected void addAdditionalSaveData(@NotNull ValueOutput valueOutput) {
         super.addAdditionalSaveData(valueOutput);
-        valueOutput.putInt("dancing_time_left", dancingTimeLeft);
+        valueOutput.putFloat("lift_height", getLiftHeight());
     }
 
     @Override
     protected void readAdditionalSaveData(@NotNull ValueInput valueInput) {
         super.readAdditionalSaveData(valueInput);
-        dancingTimeLeft = valueInput.getInt("dancing_time_left").orElse(0);
-        //setDancing(dancingTimeLeft > 0);
+        setLiftHeight(valueInput.getInt("lift_height").orElse(0));
     }
 }
